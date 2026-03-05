@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ACTIEF–SHS Visitor Tracking</title>
+
+<style>
+
+/* ===== BULLETPROOF BACKGROUND ===== */
+body{
+font-family:Arial;
+margin:0;
+min-height:100vh;
+
+/* fallback color ALWAYS visible */
+background:#e6f2ff;
+
+/* Your background image path */
+background-image:
+linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),
+url("imgs/ACT.jpg");
+
+background-size:cover;
+background-position:center;
+background-repeat:no-repeat;
+background-attachment:fixed;
+}
+
+/* HEADER */
+.header{
+display:flex;
+align-items:center;
+gap:15px;
+background:white;
+padding:10px 20px;
+box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+
+.logo{
+height:50px;
+}
+
+/* CARD */
+.card{
+background:white;
+width:420px;
+margin:30px auto;
+padding:25px;
+border-radius:10px;
+box-shadow:0 4px 15px rgba(0,0,0,.25);
+}
+
+.admin{
+width:90%;
+margin:25px auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 4px 15px rgba(0,0,0,.25);
+}
+
+.page{
+max-width:800px;
+margin:30px auto;
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 4px 15px rgba(0,0,0,.25);
+line-height:1.6;
+}
+
+input,select{
+width:100%;
+padding:8px;
+margin:6px 0;
+box-sizing: border-box;
+}
+
+/* ===== GRAY SELECT STYLING ===== */
+select {
+    background-color: #f0f0f0; /* Gray background */
+    color: #999; /* Gray text */
+    border: 1px solid #ccc;
+    transition: all 0.3s ease;
+}
+
+/* When a value is selected, turn black */
+select.has-value {
+    background-color: #fff;
+    color: #000;
+    border-color: #7ec8ff;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:10px;
+background:#7ec8ff;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+color: #000;
+}
+
+button:hover{
+background:#5ab3ff;
+}
+
+.hidden{display:none !important;}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+font-size: 14px;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:8px;
+text-align:center;
+}
+
+th{
+background-color: #f0f0f0;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<img src="images/act-logo.png" class="logo"
+onerror="this.style.display='none'">
+<h3>ACTIEF–SHS Tower 2 Visitor System</h3>
+</div>
+
+<!-- TIME PAGE -->
+<div class="card" id="timePage">
+
+<h3>Visitor Time In</h3>
+
+<input id="studentID" placeholder="Student ID (optional)">
+
+<!-- NEW: School Dropdown -->
+<label>School</label>
+<select id="school" onchange="updateSelectStyle(this)">
+<option value="">Select School</option>
+<option value="ACTIEF">ACTIEF</option>
+<option value="SHS">SHS</option>
+<option value="Other">Other</option>
+</select>
+
+<input id="fname" placeholder="First Name">
+<input id="lname" placeholder="Last Name">
+
+<label>Purpose of Visit</label>
+<select id="purpose" onchange="updateSelectStyle(this)">
+<option value="">Select Purpose</option>
+<option>Delivery</option>
+<option>Parents/Guardians Meeting</option>
+<option>Registrar Concern</option>
+<option>Guidance Office</option>
+<option>Campus Tour</option>
+<option>Student Drop-off / Pick-up</option>
+</select>
+
+<button onclick="timeIn()">TIME IN</button>
+
+<button onclick="openAdmin()">Admin Login</button>
+<button onclick="showPage('rulesPage')">Rules</button>
+<button onclick="showPage('privacyPage')">Privacy & Safety</button>
+
+</div>
+
+<!-- ADMIN LOGIN -->
+<div class="card hidden" id="adminLogin">
+<h3>Admin Login</h3>
+<input id="adminUser" placeholder="Username">
+<input id="adminPass" type="password" placeholder="Password">
+<button onclick="adminLogin()">Login</button>
+<button onclick="showPage('timePage')">Back</button>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div class="admin hidden" id="adminPage">
+<h2>Admin Dashboard</h2>
+
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>School</th>
+<th>ID</th>
+<th>Name</th>
+<th>Purpose</th>
+<th>Time</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="tableData"></tbody>
+</table>
+
+<button onclick="logout()">Logout</button>
+</div>
+
+<!-- RULES -->
+<div class="page hidden" id="rulesPage">
+<h2>Visitor Rules</h2>
+
+<p>
+- Visitors must register before entering.<br>
+- Follow school policies at all times.<br>
+- Present identification if requested.<br>
+- Respect students and staff.<br>
+- Restricted areas are prohibited without permission.
+</p>
+
+<button onclick="showPage('timePage')">Back</button>
+</div>
+
+<!-- PRIVACY -->
+<div class="page hidden" id="privacyPage">
+<h2>Privacy and Safety</h2>
+
+<p>
+Visitor information such as name, student ID, and purpose of visit is collected
+to ensure campus security and proper monitoring of visitors.
+</p>
+
+<p>
+The information is used strictly within school premises for documentation and
+safety purposes only. No data will be shared outside the institution.
+</p>
+
+<p>
+All records are stored locally and accessed only by authorized administrators.
+</p>
+
+<button onclick="showPage('timePage')">Back</button>
+</div>
+
+<script>
+
+/* SAFE PAGE SWITCHER */
+function showPage(id){
+
+const pages=[
+"timePage",
+"adminLogin",
+"adminPage",
+"rulesPage",
+"privacyPage"
+];
+
+pages.forEach(p=>{
+document.getElementById(p).classList.add("hidden");
+});
+
+document.getElementById(id).classList.remove("hidden");
+}
+
+/* ===== GRAY SELECT FUNCTION ===== */
+function updateSelectStyle(selectElement){
+    if(selectElement.value !== ""){
+        selectElement.classList.add("has-value");
+    } else {
+        selectElement.classList.remove("has-value");
+    }
+}
+
+/* STORAGE */
+let data = JSON.parse(localStorage.getItem("visitors")) || [];
+
+/* TIME IN */
+function timeIn(){
+
+let fname=document.getElementById("fname").value.trim();
+let lname=document.getElementById("lname").value.trim();
+let school=document.getElementById("school").value;
+let purpose=document.getElementById("purpose").value;
+
+if(!fname||!lname||!school||!purpose){
+alert("Please fill in all required fields (including School).");
+return;
+}
+
+data.push({
+id:document.getElementById("studentID").value||"-",
+school: school,
+name:fname+" "+lname,
+purpose,
+time:new Date().toLocaleString()
+});
+
+localStorage.setItem("visitors",JSON.stringify(data));
+
+alert("Time In Successful");
+location.reload();
+}
+
+/* ADMIN */
+function openAdmin(){
+showPage("adminLogin");
+}
+
+function adminLogin(){
+
+if(
+document.getElementById("adminUser").value==="admin" &&
+document.getElementById("adminPass").value==="actadmin123"
+){
+showPage("adminPage");
+loadTable();
+}else{
+alert("Wrong login");
+}
+}
+
+function logout(){
+location.reload();
+}
+
+/* LOAD TABLE */
+function loadTable(){
+
+const table=document.getElementById("tableData");
+table.innerHTML="";
+
+data.forEach((v,i)=>{
+table.innerHTML+=`
+<tr>
+<td>${String(i+1).padStart(3,'0')}</td>
+<td>${v.school}</td>
+<td>${v.id}</td>
+<td>${v.name}</td>
+<td>${v.purpose}</td>
+<td>${v.time}</td>
+<td><button onclick="deleteEntry(${i})" style="background:#ff6b6b; width:auto; padding:5px 10px; margin:0;">Delete</button></td>
+</tr>`;
+});
+}
+
+function deleteEntry(i){
+if(confirm("Delete entry?")){
+data.splice(i,1);
+localStorage.setItem("visitors",JSON.stringify(data));
+loadTable();
+}
+}
+
+</script>
+
+</body>
+</html>
